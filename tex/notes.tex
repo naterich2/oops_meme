@@ -1,0 +1,39 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\begin{document}
+\title{Notes}
+\author{Nate Richman (nate@nrichman.dev)}
+\maketitle
+
+\paragraph{E-Step}
+We want to calculate:
+\[
+    Z_{i,j}^t = \frac{P(X_i|Z_{i,j}=1,p^{t-1})}{\sum_{k=1}^{m}P(X_i|Z_{i,k}=1,p^{t-1})}
+\] 
+In log space this is:
+\begin{align*}
+    \log (Z_{i,j}^t) &=\log \left( \frac{P(X_i|Z_{i,j}=1,p^{t-1})}{\sum_{k=1}^{m}P(X_i|Z_{i,k}=1,p^{t-1})}\right)\\
+                     &= \log \left( P(X_i|Z_{i,j}=1,p^{t-1}) \right) - \log \left( \sum_{k=1}^{m}P(X_i|Z_{i,k}=1,p^{t-1}) \right)
+\end{align*}
+The rightmost term is a log of sums which we can compute recursively with:
+\[
+    \log(x + y) = \log x + \log \left(1 + \exp (\log(y) - \log(x))\right) 
+\] 
+Which is in log space:
+\[
+    \log(x + y) = x' + \log(1 + \exp(y' - x'))
+\] 
+Which works because I've already calculated each term in log-space
+\paragraph{M-Step}
+We want to compute $p_{c,k}$ where it is defined as:
+\begin{align*}
+    p_{c,k}^t = \frac{n_{c,k} + d_{c,k}}{\displaystyle\sum\limits_{b \in \left\{A,C,G,T\right\}} \left( n_{b,k} + d_{b,k} \right)}
+\end{align*}
+For $k \ne 0$, $n_{c,k}$ is the sum over the sequences and all positions $j$ where $c$ appears as the $k$th column in the motif.  If this is written as a loop over all characters ($j$) in each sequence ($j$), we have to think about what possible positions the character at position $j$.  For example the first character in a sequence can only be the first column of a motif, the second character in the sequence could be the first or second character in the motif, etc.
+
+So looping over all possible characters we find an array of what columns it could be in if it were part of the motif, and add the $Z_{i,j}$ value to its total where $i$ is the sequence id and $j$ is the starting position that would correspond to the character being in the $k$th position of that motif.
+\end{document}
