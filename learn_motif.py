@@ -323,9 +323,9 @@ class MEME(object):
         while(True):
             log_likelihood,p_matrix,z_matrix = self._run_em(self._P)
             i += 1
-            if (current - log_likelihood > -.1) and (current -  log_likelihood < 0):
+            if (current - log_likelihood > -.01) and (current -  log_likelihood < 0):
                 current = log_likelihood
-                print("Difference less than -.1.  EM converged.  Log-likelihood: ", log_likelihood)
+                print("Difference less than -.01.  EM converged.  Log-likelihood: ", log_likelihood)
                 break
             elif log_likelihood > current:
                 current = log_likelihood
@@ -460,8 +460,10 @@ def main(args):
         with open(subseq_file_path,'w') as out_file:
             for sequence in subseqs:
                 print(sequence, file=out_file)
-        with open(model_file_path) as out_file:
-            print(my_meme.p.to_csv(header=False,sep='\t'))
+
+        with open(model_file_path, 'w') as out_file:
+            print(my_meme.p.to_csv(header=False,sep='\t'),file=out_file)
+
     elif args.sub_name == 'logo':
         model_filename = args.model_filename
         # Read file as csv with tab separator, treat the first column as the row names, and drop columns that are NaN
