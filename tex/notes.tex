@@ -36,4 +36,29 @@ We want to compute $p_{c,k}$ where it is defined as:
 For $k \ne 0$, $n_{c,k}$ is the sum over the sequences and all positions $j$ where $c$ appears as the $k$th column in the motif.  If this is written as a loop over all characters ($j$) in each sequence ($j$), we have to think about what possible positions the character at position $j$.  For example the first character in a sequence can only be the first column of a motif, the second character in the sequence could be the first or second character in the motif, etc.
 
 So looping over all possible characters we find an array of what columns it could be in if it were part of the motif, and add the $Z_{i,j}$ value to its total where $i$ is the sequence id and $j$ is the starting position that would correspond to the character being in the $k$th position of that motif.
+\paragraph{Likelihood function}
+The M-step computes the joint likelihood function $P(X,Z|\theta) = \displaystyle\prod\limits_i P(X_{i},Z_i | \theta)$, but we want $P(X|\theta)$ which we can get by marginilizing over all starting points ($j$:
+\begin{align*}
+    P(X|\theta) &= \displaystyle\prod\limits_i^N \displaystyle\sum_{j=1}^{L - W + 1} P(X_{i},Z_{i,j} = 1 | \theta)\\
+                &=\displaystyle\prod\limits_i^N \displaystyle\sum_{j=1}^{L - W + 1}  P(X_{i}|Z_{i,j} = 1 , \theta)P(Z_{i,j}=1 | \theta)\\
+\end{align*}
+Assuming that the probability of a start being at a certain position is uniform, we have the $P(Z_{i,j}=1 | \theta) = \frac{1}{m} = \frac{1}{L - W + 1}$:
+\begin{align*}
+    P(X|\theta) &=\displaystyle\prod\limits_i^N \displaystyle\sum_{j=1}^{L - W + 1} P(X_{i}|Z_{i,j} = 1 , \theta)\frac{1}{L - W + 1}\\
+                &= \displaystyle\prod\limits_i^N \frac{1}{L - W + 1}  \displaystyle\sum_{j=1}^{L - W + 1} P(X_{i}|Z_{i,j} = 1 , \theta)
+\end{align*}
+And we are given that:
+\[
+    P(X_i | Z_{i,j} = 1, \theta) = \displaystyle\prod\limits_{k=1}^{j-1}p_{c_{k,0}} \displaystyle\prod\limits_{k=j}^{j+W-1}p_{c_{k,k-j+1}} \displaystyle\prod\limits_{k=j+W}^{L}p_{c_{k,0}}
+\] 
+Putting it all together we have that:
+\begin{align*}
+    P(X | p) = \displaystyle\prod\limits_i^N \left[ \frac{1}{L - W + 1}  \displaystyle\sum_{j=1}^{L - W + 1} \left(\displaystyle\prod\limits_{k=1}^{j-1}p_{c_{k,0}} \displaystyle\prod\limits_{k=j}^{j+W-1}p_{c_{k,k-j+1}} \displaystyle\prod\limits_{k=j+W}^{L}p_{c_{k,0}}\right)\right]
+\end{align*}
+
+My code already calculates the inner sum so if I want to do it in log space I have:
+\begin{align*}
+    \log P(X|p) = \displaystyle\sum\limits_{i=1}^N \log \ \textbf{sum} -\log \left(L - W + 1\right) 
+\end{align*}
 \end{document}
+
