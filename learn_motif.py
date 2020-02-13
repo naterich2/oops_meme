@@ -16,7 +16,6 @@ import seq_logo
 import matplotlib.pyplot as plt
 # You can choose to write classes in other python files
 # and import them here.
-_temp_p_matrix = pd.DataFrame(data=np.array([.25,.1,.5,.2,.25,.4,.2,.1,.25,.3,.1,.6,.25,.2,.2,.1]).reshape((4,4)),index=['A','C','G','T'])
 
 class MEME(object):
 
@@ -296,15 +295,18 @@ class MEME(object):
     #        z_matrix[i,:] = np.zeros_like(row)
     #        z_matriz[i,max_index] = 1
 
-        total = 0
-        n = len(self._sequences)
+#        total = 0
+#        n = len(self._sequences)
         m = z_matrix.shape[1]
-        # Enumerate all sequences
-        for i, seq in enumerate(self._sequences):
-            # Enumerate all starting positions
-            for j, col in enumerate(z_matrix[i,:]):
-                # Calculate sequence prob
-                total += (z_matrix[i,j]*self._calc_seq_prob(seq,j,p_matrix) + n*np.log(1/m))
+#        # Enumerate all sequences
+#        for i, seq in enumerate(self._sequences):
+#            # Enumerate all starting positions
+#            for j, col in enumerate(z_matrix[i,:]):
+#                # Calculate sequence prob
+#                total += (z_matrix[i,j]*self._calc_seq_prob(seq,j,p_matrix) + n*np.log(1/m))
+        total = 0
+        for i,seq in enumerate(self._sequences):
+            total += self._calc_seq_prob_sum(seq,p_matrix)[0] - np.log(m)
 
         return total
 
@@ -323,9 +325,9 @@ class MEME(object):
         while(True):
             log_likelihood,p_matrix,z_matrix = self._run_em(self._P)
             i += 1
-            if (current - log_likelihood > -.01) and (current -  log_likelihood < 0):
+            if (current - log_likelihood > -.05) and (current -  log_likelihood < 0):
                 current = log_likelihood
-                print("Difference less than -.01.  EM converged.  Log-likelihood: ", log_likelihood)
+                print("Difference less than -.05.  EM converged.  Log-likelihood: ", log_likelihood)
                 break
             elif log_likelihood > current:
                 current = log_likelihood
@@ -363,8 +365,10 @@ class MEME(object):
 
         ################### E-Step #####################
         # Compute Z_{i,j}^t
+        seq_sums = [0]*len(self._sequences)
         for i,sequence in enumerate(self._sequences):
             sequence_sum,individuals = self._calc_seq_prob_sum(sequence,p_matrix)
+            seq_sums[i] = sequence_sum
             # Set the values for the sequence by dividing the individual probability by the sum, using subtraction in log-space and normalize
             _z[i,:] = self._normalize([(x - sequence_sum) for x in individuals])
 
@@ -463,6 +467,19 @@ def main(args):
 
         with open(model_file_path, 'w') as out_file:
             print(my_meme.p.to_csv(header=False,sep='\t'),file=out_file)
+            print(my_meme.p.to_csv(header=False,sep='\t',float_format="%.3f"))
+        if args.graph:
+            heights = seq_logo.seq_logo(my_meme.p)
+            plots = [0]*my_meme.p.shape[0]
+            for letter in range(my_meme.p.shape[0]):
+                plots[letter] = plt.bar(list(range(my_meme.p.shape[1])),
+                        my_meme.p.iloc[letter,:],bottom=(np.sum(my_meme.p.iloc[0:letter,:]) if letter != 0 else 0))[0]
+            plt.legend(plots,('A','C','G','T'))
+            plt.ylim([0,2])
+            plt.ylabel('Bits')
+            plt.show()
+
+
 
     elif args.sub_name == 'logo':
         model_filename = args.model_filename
@@ -508,6 +525,10 @@ if __name__ == "__main__":
                         help='width of the motif.',
                         type=int,
                         default=6)
+    parser_em.add_argument('--graph',
+                            help='Graph model?',
+                            action='store_true',
+                            default=False)
     parser_em.add_argument('--start',
                         help='Motif possibility to start with, must be same length as --width.',
                         type=str,
